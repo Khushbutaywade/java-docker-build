@@ -13,42 +13,22 @@ variables:
   containerRegistry: 'khushbucontainer.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
-
-  
-
-pr:
-- '*'
-
-pool:
-  vmImage: 'ubuntu-latest'  # Use an appropriate agent image based on your needs
-
 stages:
+  - 
 - stage: Build
-  displayName: Build and Push Docker Image
-  jobs:
-  - job: BuildDockerImage
-    displayName: Build Docker Image
+  displayName: Build and push stage
+  jobs:  
+  - job: Build
+    displayName: Build job
+    pool:
+      vmImage: $(vmImageName)
     steps:
-    -
-    - task: UseNode@1
+    - task: Docker@2
+      displayName: Build and push an image to container registry
       inputs:
-        version: '14'  # Specify the desired Node.js version
-    - script: |
-        # Install Maven
-        apk add --no-cache maven
-
-        # Check Java and Maven versions
-        java -version
-        mvn --version
-
-        # Set up the Docker Buildx CLI (optional)
-        docker buildx create --use
-      displayName: 'Install Dependencies'
-    - script: |
-        # Build the Docker image
-        docker build -t yourregistry.azurecr.io/yourimage:latest -f Dockerfile .
-
-        # Push the Docker image to Azure Container Registry (ACR)
-        docker login yourregistry.azurecr.io -u $(dockerRegistryServiceConnection) -p $(dockerRegistryServiceConnection)
-        docker push yourregistry.azurecr.io/yourimage:latest
-      displayName: 'Build and Push Docker Image'
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
